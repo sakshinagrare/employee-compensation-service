@@ -160,6 +160,73 @@ git push
 
 To avoid that merge-conflict situation next time: when creating a new GitHub repo you plan to push an existing local project into, uncheck "Add a README file" (and .gitignore/license) on the creation screen — let your local files be the only source of truth on first push.
 
+## Running the service
+
+Start the Functions host (leave this terminal running):
+```powershell
+cd C:\Users\mruge\employee-compensation-service
+.\.venv\Scripts\Activate.ps1
+func start
+```
+
+Open a **second** terminal for testing — don't run test commands in the
+same terminal as `func start`, since it needs to keep running there.
+```powershell
+cd C:\Users\mruge\employee-compensation-service
+Invoke-RestMethod http://localhost:7071/api/employees
+```
+
+### Part A — CRUD
+```powershell
+# List all
+Invoke-RestMethod http://localhost:7071/api/employees
+
+# List filtered by department
+Invoke-RestMethod "http://localhost:7071/api/employees?departmentId=1"
+
+# Get one
+Invoke-RestMethod http://localhost:7071/api/employees/1
+
+# Create
+$newEmp = @{
+    FirstName    = "Test"
+    LastName     = "User"
+    DepartmentID = 1
+    Salary       = 700000
+    HireDate     = "2024-01-01"
+} | ConvertTo-Json
+$created = Invoke-RestMethod -Uri http://localhost:7071/api/employees -Method POST -ContentType "application/json" -Body $newEmp
+$created
+
+# Update
+$update = @{ Bonus = 35000 } | ConvertTo-Json
+Invoke-RestMethod -Uri "http://localhost:7071/api/employees/$($created.EmployeeID)" -Method PUT -ContentType "application/json" -Body $update
+
+# Delete (cleans up the test record so it doesn't pollute your reports)
+Invoke-RestMethod -Uri "http://localhost:7071/api/employees/$($created.EmployeeID)" -Method DELETE
+```
+
+### Part B — Reporting
+```powershell
+Invoke-RestMethod http://localhost:7071/api/reports/total-bonus
+Invoke-RestMethod http://localhost:7071/api/reports/no-bonus
+Invoke-RestMethod http://localhost:7071/api/reports/bonus-percentage
+Invoke-RestMethod http://localhost:7071/api/reports/departments-bonus-exceeds-avg-salary
+Invoke-RestMethod http://localhost:7071/api/reports/employees-ranked-by-bonus
+Invoke-RestMethod http://localhost:7071/api/reports/highest-salary
+```
+Note: `departments-bonus-exceeds-avg-salary` returns an empty result with
+the seed data — that's expected (no department's total bonus currently
+exceeds its average salary), not a bug. PowerShell prints nothing to the
+console for an empty array, so an empty response here is correct
+behavior, not a failure.
+
+### Part C — Effective bonus
+```powershell
+Invoke-RestMethod "http://localhost:7071/api/employees/2/effective-bonus?applyDefaultBonus=true"
+Invoke-RestMethod "http://localhost:7071/api/employees/2/effective-bonus"
+```
+
 ## Troubleshooting log (issues actually hit during setup)
 
 | Symptom | Cause | Fix |
