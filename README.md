@@ -283,7 +283,7 @@ Example create request body:
 | :---- | :---- | :---- |
 | GET | `/api/employees/{id}/effective-bonus?applyDefaultBonus=true` | Returns bonus with the 5%-of-salary default applied for employees who have none |
 
-## Design decisions (for the interview)
+## Design decisions
 
 **Why Functions-only DB access?** Keeps a single, auditable, testable choke point for all data access — consistent validation, consistent error handling, and no client ever needs direct DB credentials.
 
